@@ -1,16 +1,14 @@
 package de.schauderhaft.degraph.gui;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import de.schauderhaft.degraph.java.JavaGraph;
 import de.schauderhaft.degraph.java.JavaHierarchicGraph;
 import de.schauderhaft.degraph.java.NodeBuilder;
 import de.schauderhaft.degraph.model.Node;
+import de.schauderhaft.degraph.model.SimpleNode;
 
 /**
  * open the degraph visualisation
@@ -18,15 +16,28 @@ import de.schauderhaft.degraph.model.Node;
  */
 public class GuiStarter extends javafx.application.Application {
 
-	public GuiStarter() {
-
-	}
+	/**
+	 * Temporal storage
+	 * 
+	 * This is butt ugly, but JavaFx seems to insist to create the Application
+	 * instance through a parameterless constructor. So we have to put the
+	 * reference to the data we want to show in a dropbox (private static
+	 * variable), so we can pick it up once JavaFx is so kind to start us.
+	 */
+	private static JavaHierarchicGraph graph;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		// now we can access graph here and put it where ever we need it. I
+		// hope.
+		System.out.println(graph);
+
 		primaryStage.setTitle("degraph");
 
 		Parent root = FXMLLoader.load(getClass().getResource("MainView.fxml"));
+
+		// find the proper parent node in the SceneGraph, loop through the nodes
+		// in graph and add them as JavaFXNodeThingies to the parent.
 
 		// Adding HBox to the scene
 		Scene scene = new Scene(root, 800, 600);
@@ -36,7 +47,7 @@ public class GuiStarter extends javafx.application.Application {
 	}
 
 	public void show(JavaHierarchicGraph g) {
-		DataProvider.setData(g);
+		graph = g;
 		launch(new String[0]);
 	}
 
@@ -50,40 +61,8 @@ public class GuiStarter extends javafx.application.Application {
 		GuiStarter s = new GuiStarter();
 		// s.show(null);
 
-		final Map<Node, Node> categories = new HashMap<>();
-		categories.put(asNode("Queen"), asNode("Heavy"));
-		categories.put(asNode("Rook"), asNode("Heavy"));
-		categories.put(asNode("Bishop"), asNode("Light"));
-		categories.put(asNode("Knight"), asNode("Light"));
-		categories.put(asNode("Light"), asNode("Figure"));
-		categories.put(asNode("Heavy"), asNode("Figure"));
-
-		JavaHierarchicGraph graph = new JavaHierarchicGraph() {
-
-			@Override
-			public Set<Node> topNodes() {
-				// TODO Auto-generated method stub
-				return categories.keySet();
-			}
-
-			@Override
-			public Set<Node> contentsOf(Node group) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Set<Node> connectionsOf(Node node) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Set<Node> allNodes() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		};
+		JavaGraph graph = new JavaGraph();
+		graph.add(new SimpleNode("type", "the name"));
 
 		s.show(graph);
 	}
