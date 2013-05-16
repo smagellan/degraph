@@ -20,6 +20,6 @@ public class Layouter {
 	 * Layout a set of nodes and returns a set of their controller.
 	 */
 	public Set<NodeController> layoutedNode(Set<Node> nodes) {
-		return layout.getlayout(graph, nodes);
+		return layout.layout(graph, nodes);
 	}
 }

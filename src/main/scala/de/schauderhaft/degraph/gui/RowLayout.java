@@ -15,7 +15,7 @@ public class RowLayout implements Layout{
 
 	private static final int DISTANCE = 50;
 
-	public Set<NodeController> getlayout(JavaHierarchicGraph graph,
+	public Set<NodeController> layout(JavaHierarchicGraph graph,
 			Set<Node> nodes) {
 		Set<NodeController> result = new HashSet<>();
 		int y = 0;
