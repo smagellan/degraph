@@ -22,9 +22,11 @@ import java.io.IOException;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
 /**
  * Goal which touches a timestamp file.
@@ -38,6 +40,9 @@ public class MyMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project.build.directory}", property = "outputDir", required = true)
     private File outputDirectory;
+
+    @Component
+    private DependencyGraphBuilder dependencyTreeBuilder;
 
     public void execute() throws MojoExecutionException {
         File f = outputDirectory;

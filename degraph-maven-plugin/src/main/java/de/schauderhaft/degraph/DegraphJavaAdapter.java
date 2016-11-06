@@ -1,5 +1,6 @@
 package de.schauderhaft.degraph;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,15 +40,12 @@ public class DegraphJavaAdapter {
 
         System.err.println("config: " + nativeConfig);
         Graph graph = nativeConfig.createGraph();
-        List<Seq<Node>> violations = config.getConstraints().stream()
-                .flatMap( el -> JavaConversions.asJavaCollection(el.violations(graph)).stream() )
-                .flatMap( el -> DegraphJavaAdapter.violationToCollection(el).stream() )
-                .collect(Collectors.toList());
+        List<Seq<Node>> violations = constraintsToNodes(config.getConstraints(), graph);
         System.err.print(violations);
         //here walk dragons: temp var to get rid of type parameters
         scala.Function1 slicing = nativeConfig.slicing();
 
-        //here walk dragons: Idea IDE expects 2 args
+        //here walk dragons: Idea IDE expects 2-args PredicateStyler.styler
         scala.Function1<scala.Tuple2<Node, Node>, EdgeStyle> styler = PredicateStyler.styler(
                 new SlicePredicate(slicing, ConversionHelper.toImmutableScalaSet(new HashSet(violations))),
                 EdgeStyle.apply(Color.RED, 2.0),
@@ -57,7 +55,20 @@ public class DegraphJavaAdapter {
         XML.save(((Print)nativeConfig.output()).path(), xml, "UTF-8", true, null);
     }
 
-    private static Collection<Seq<Node>> violationToCollection(ConstraintViolation violation) {
+    private List<Seq<Node>> constraintsToNodes(Set<Constraint> constraints, Graph graph) {
+        //Collection<ConstraintViolation> violations = new ArrayList<>();
+        List<Seq<Node>> result = new ArrayList<>();
+        for (Constraint constraint : constraints) {
+            Collection<ConstraintViolation> violations = JavaConversions.asJavaCollection(constraint.violations(graph));
+            for (ConstraintViolation violation : violations) {
+                Collection<Seq<Node>> dependencies = DegraphJavaAdapter.violationToDependenciesCollection(violation);
+                result.addAll(dependencies);
+            }
+        }
+        return result;
+    }
+
+    private static Collection<Seq<Node>> violationToDependenciesCollection(ConstraintViolation violation) {
         //here walk dragons: for some reason Idea IDE is stuck with types here(i.e. expects Tuple2 instead of Seq);
         scala.collection.Seq dependencies = violation.dependencies();
         return JavaConversions.asJavaCollection(dependencies.toList());
@@ -68,7 +79,8 @@ public class DegraphJavaAdapter {
         List<String> includes = Arrays.asList();
         List<String> excludes = Arrays.asList();
         Map<String, List<Pattern>> categories = Collections.emptyMap();
-        Set<Constraint> constraint = Collections.singleton(CycleFree$.MODULE$);
+        //TODO: introduce type parameter (here walk dragons)
+        Set constraint = Collections.singleton(CycleFree$.MODULE$);
         DegraphJavaConfig config = new DegraphJavaConfig(classPath, includes, excludes, categories,
                 new Print("/tmp/degraph-test.xml", true), constraint);
         DegraphJavaAdapter adapter = new DegraphJavaAdapter(config);

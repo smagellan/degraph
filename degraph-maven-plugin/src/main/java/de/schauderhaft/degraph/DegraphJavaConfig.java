@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.schauderhaft.degraph.analysis.AnalyzerLike;
 import de.schauderhaft.degraph.analysis.asm.Analyzer$;
@@ -71,10 +70,7 @@ public class DegraphJavaConfig {
     }
 
     public Configuration toNativeConfig() {
-        Map<String, Seq<Pattern>> transformedCategories = getCategories()
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap( entry -> entry.getKey(), entry -> JavaConversions.asScalaBuffer(entry.getValue())));
+        Map<String, Seq<Pattern>> transformedCategories = transofrmedCategories();
         return new Configuration(Option.apply(classpath),
                 JavaConversions.asScalaBuffer(getIncludes()),
                 JavaConversions.asScalaBuffer(getExcludes()),
@@ -82,5 +78,16 @@ public class DegraphJavaConfig {
                 output,
                 ConversionHelper.toImmutableScalaSet(getConstraints()),
                 analyzer);
+    }
+
+    //replaceable with Java 8 lambdas
+    private Map<String, Seq<Pattern>> transofrmedCategories() {
+        Map<String, Seq<Pattern>> result = new HashMap<>();
+        for (Map.Entry<String, List<Pattern>> entry : categories.entrySet()) {
+            String key = entry.getKey();
+            Seq<Pattern> value = JavaConversions.asScalaBuffer(entry.getValue());
+            result.put(key, value);
+        }
+        return result;
     }
 }
