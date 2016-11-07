@@ -19,7 +19,14 @@ package de.schauderhaft.degraph;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
+import de.schauderhaft.degraph.configuration.CycleFree$;
+import de.schauderhaft.degraph.configuration.Pattern;
+import de.schauderhaft.degraph.configuration.Print;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,17 +34,17 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilderException;
 
 /**
  * Goal which touches a timestamp file.
  *
  * @deprecated Don't use!
  */
-@Mojo(name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
+@Mojo(name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES, requiresDependencyResolution = ResolutionScope.TEST)
 public class MyMojo extends AbstractMojo {
     /**
      * Location of the file.
@@ -59,8 +66,14 @@ public class MyMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         try {
-            new ClasspathBuilder(dependencyGraphBuilder).collectProjectDependencies(mavenSession);
-        } catch (DependencyGraphBuilderException ex) {
+            String classpath = ClasspathBuilder.buildClasspathString(mavenProject);
+            //TODO: introduce type parameter (here walk dragons)
+            Set constraint = Collections.singleton(CycleFree$.MODULE$);
+            DegraphJavaConfig config = new DegraphJavaConfig(classpath, Collections.<String>emptyList(),
+                    Collections.<String>emptyList(), Collections.<String, List<Pattern>>emptyMap(),
+                    new Print("/tmp/degraph-test.xml", true), constraint);
+            new DegraphJavaAdapter(config).analyze();
+        } catch (DependencyResolutionRequiredException ex) {
             MojoExecutionException newEx = new MojoExecutionException(ex.getLocalizedMessage());
             newEx.initCause(ex);
             throw newEx;

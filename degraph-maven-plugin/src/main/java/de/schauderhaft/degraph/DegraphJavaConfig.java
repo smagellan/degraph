@@ -12,6 +12,7 @@ import de.schauderhaft.degraph.analysis.AnalyzerLike;
 import de.schauderhaft.degraph.analysis.asm.Analyzer$;
 import de.schauderhaft.degraph.configuration.Configuration;
 import de.schauderhaft.degraph.configuration.Constraint;
+import de.schauderhaft.degraph.configuration.CycleFree$;
 import de.schauderhaft.degraph.configuration.Pattern;
 import de.schauderhaft.degraph.configuration.PrintConfiguration;
 import scala.Option;
