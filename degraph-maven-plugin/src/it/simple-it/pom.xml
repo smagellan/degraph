@@ -40,6 +40,9 @@
                 <groupId>de.schauderhaft.degraph</groupId>
                 <artifactId>degraph-maven-plugin</artifactId>
                 <version>1.0-SNAPSHOT</version>
+                <configuration>
+                    <outputFilename>/tmp/degraph-test1.xml</outputFilename>
+                </configuration>
                 <executions>
                     <execution>
                         <id>touch</id>

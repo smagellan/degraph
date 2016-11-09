@@ -1,21 +1,5 @@
 package de.schauderhaft.degraph;
 
-/*
- * Copyright 2001-2005 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,7 +11,6 @@ import de.schauderhaft.degraph.configuration.CycleFree$;
 import de.schauderhaft.degraph.configuration.Pattern;
 import de.schauderhaft.degraph.configuration.Print;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -36,8 +19,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
 /**
  * Goal which touches a timestamp file.
@@ -45,7 +26,7 @@ import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
  * @deprecated Don't use!
  */
 @Mojo(name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES, requiresDependencyResolution = ResolutionScope.TEST)
-public class MyMojo extends AbstractMojo {
+public class DegraphVisualizeMojo extends AbstractMojo {
     /**
      * Location of the file.
      */
@@ -53,16 +34,10 @@ public class MyMojo extends AbstractMojo {
     private File outputDirectory;
 
     @Component
-    private DependencyGraphBuilder dependencyGraphBuilder;
-
-    @Component
-    private ProjectBuilder projectBuilder;
-
-    @Component
     private MavenProject mavenProject;
 
-    @Component
-    private MavenSession mavenSession;
+    @Parameter( required = true, property = "outputFilename" )
+    private String outputFilename;
 
     public void execute() throws MojoExecutionException {
         try {
@@ -71,7 +46,7 @@ public class MyMojo extends AbstractMojo {
             Set constraint = Collections.singleton(CycleFree$.MODULE$);
             DegraphJavaConfig config = new DegraphJavaConfig(classpath, Collections.<String>emptyList(),
                     Collections.<String>emptyList(), Collections.<String, List<Pattern>>emptyMap(),
-                    new Print("/tmp/degraph-test.xml", true), constraint);
+                    new Print(outputFilename, true), constraint);
             new DegraphJavaAdapter(config).analyze();
         } catch (DependencyResolutionRequiredException ex) {
             MojoExecutionException newEx = new MojoExecutionException(ex.getLocalizedMessage());
