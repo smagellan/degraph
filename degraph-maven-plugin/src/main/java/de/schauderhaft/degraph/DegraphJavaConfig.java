@@ -73,8 +73,8 @@ public class DegraphJavaConfig {
     public Configuration toNativeConfig() {
         Map<String, Seq<Pattern>> transformedCategories = transofrmedCategories();
         return new Configuration(Option.apply(classpath),
-                JavaConversions.asScalaBuffer(getIncludes()),
-                JavaConversions.asScalaBuffer(getExcludes()),
+                JavaConversions.asScalaBuffer(includes),
+                JavaConversions.asScalaBuffer(excludes),
                 ConversionHelper.toImmutableScalaMap(transformedCategories),
                 output,
                 ConversionHelper.toImmutableScalaSet(getConstraints()),

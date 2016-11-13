@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.schauderhaft.degraph.configuration.Configuration;
 import de.schauderhaft.degraph.configuration.Constraint;
 import de.schauderhaft.degraph.configuration.ConstraintViolation;
@@ -31,39 +29,65 @@ import java.awt.Color;
 
 public class DegraphJavaAdapter {
     private final DegraphJavaConfig config;
+    private final Configuration nativeConfig;
+    private Graph graph;
+    private List<Seq<Node>> violationNodes;
+    private List<ConstraintViolation> violations;
     public DegraphJavaAdapter(DegraphJavaConfig config) {
         this.config = config;
+        this.nativeConfig = config.toNativeConfig();
+        this.graph = null;
+        this.violationNodes = null;
     }
 
     public void analyze() {
-        Configuration nativeConfig = config.toNativeConfig();
-
         System.err.println("config: " + nativeConfig);
-        Graph graph = nativeConfig.createGraph();
-        List<Seq<Node>> violations = constraintsToNodes(config.getConstraints(), graph);
-        System.err.print(violations);
-        //here walk dragons: temp var to get rid of type parameters
-        scala.Function1 slicing = nativeConfig.slicing();
-
-        //here walk dragons: Idea IDE expects 2-args PredicateStyler.styler
-        scala.Function1<scala.Tuple2<Node, Node>, EdgeStyle> styler = PredicateStyler.styler(
-                new SlicePredicate(slicing, ConversionHelper.toImmutableScalaSet(new HashSet(violations))),
-                EdgeStyle.apply(Color.RED, 2.0),
-                DefaultEdgeStyle$.MODULE$);
-
-        Elem xml = new de.schauderhaft.degraph.writer.Writer(styler).toXml(graph);
-        XML.save(((Print)nativeConfig.output()).path(), xml, "UTF-8", true, null);
+        System.err.println("creating graph");
+        graph = nativeConfig.createGraph();
+        System.err.println("done");
+        violations = constraintsToViolations(config.getConstraints(), graph);
+        violationNodes = violationsToNodes();
+        System.err.println(violationNodes);
     }
 
-    private List<Seq<Node>> constraintsToNodes(Set<Constraint> constraints, Graph graph) {
-        //Collection<ConstraintViolation> violations = new ArrayList<>();
-        List<Seq<Node>> result = new ArrayList<>();
+    private void checkAnalyzed() {
+        if (graph == null) {
+            throw new IllegalStateException("Wrong state: graph not initialized. Please call analyze() first");
+        }
+    }
+
+    public void storeGraph() {
+        checkAnalyzed();
+        if (nativeConfig.output() instanceof Print) {
+            //here walk dragons: temp var to get rid of type parameters
+            scala.Function1 slicing = nativeConfig.slicing();
+            //here walk dragons: Idea IDE expects 2-args PredicateStyler.styler
+            scala.Function1<scala.Tuple2<Node, Node>, EdgeStyle> styler = PredicateStyler.styler(
+                    new SlicePredicate(slicing, ConversionHelper.toImmutableScalaSet(new HashSet(violationNodes))),
+                    EdgeStyle.apply(Color.RED, 2.0),
+                    DefaultEdgeStyle$.MODULE$);
+
+            System.err.println("processing report xml");
+            Elem xml = new de.schauderhaft.degraph.writer.Writer(styler).toXml(graph);
+            XML.save(((Print) nativeConfig.output()).path(), xml, "UTF-8", true, null);
+            System.err.println("done");
+        }
+    }
+
+    private List<ConstraintViolation> constraintsToViolations(Set<Constraint> constraints, Graph graph) {
+        List<ConstraintViolation> result = new ArrayList<>();
         for (Constraint constraint : constraints) {
             Collection<ConstraintViolation> violations = JavaConversions.asJavaCollection(constraint.violations(graph));
-            for (ConstraintViolation violation : violations) {
-                Collection<Seq<Node>> dependencies = DegraphJavaAdapter.violationToDependenciesCollection(violation);
-                result.addAll(dependencies);
-            }
+            result.addAll(violations);
+        }
+        return result;
+    }
+
+    private List<Seq<Node>> violationsToNodes() {
+        List<Seq<Node>> result = new ArrayList<>();
+        for (ConstraintViolation violation : violations) {
+            Collection<Seq<Node>> dependencies = DegraphJavaAdapter.violationToDependenciesCollection(violation);
+            result.addAll(dependencies);
         }
         return result;
     }
@@ -85,5 +109,21 @@ public class DegraphJavaAdapter {
                 new Print("/tmp/degraph-test.xml", true), constraint);
         DegraphJavaAdapter adapter = new DegraphJavaAdapter(config);
         adapter.analyze();
+        System.err.println(adapter.getViolations().isEmpty());
+    }
+
+    public Graph getGraph() {
+        checkAnalyzed();
+        return graph;
+    }
+
+    public List<Seq<Node>> getViolationNodes() {
+        checkAnalyzed();
+        return Collections.unmodifiableList(violationNodes);
+    }
+
+    public List<ConstraintViolation> getViolations() {
+        checkAnalyzed();
+        return Collections.unmodifiableList(violations);
     }
 }

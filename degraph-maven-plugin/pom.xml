@@ -56,6 +56,12 @@
             <artifactId>degraph-core</artifactId>
             <version>0.1.4</version>
         </dependency>
+        <!-- TODO: remove 'degraph-check' dependency before merging to upstream-->
+        <dependency>
+            <groupId>de.schauderhaft.degraph</groupId>
+            <artifactId>degraph-check</artifactId>
+            <version>0.1.4</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.maven.shared</groupId>
             <artifactId>maven-dependency-tree</artifactId>
