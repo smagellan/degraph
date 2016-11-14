@@ -81,7 +81,6 @@ public class DegraphJavaConfig {
                 analyzer);
     }
 
-    //replaceable with Java 8 lambdas
     private Map<String, Seq<Pattern>> transofrmedCategories() {
         Map<String, Seq<Pattern>> result = new HashMap<>();
         for (Map.Entry<String, List<Pattern>> entry : categories.entrySet()) {

@@ -9,11 +9,13 @@ import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.project.MavenProject;
 
 public class ClasspathBuilder {
-    public static String buildClasspathString(MavenProject mavenProject) throws DependencyResolutionRequiredException {
-        List<Artifact> artifacts = mavenProject.getRuntimeArtifacts();
-        List<String> artifactFiles = new ArrayList<>(artifacts.size());
-        for (Artifact artifact : artifacts) {
-            artifactFiles.add(artifact.getFile().getAbsolutePath());
+    public static String buildClasspathString(MavenProject mavenProject, boolean addArtifacts) throws DependencyResolutionRequiredException {
+        List<String> artifactFiles = new ArrayList<>();
+        if (addArtifacts) {
+            List<Artifact> artifacts = mavenProject.getRuntimeArtifacts();
+            for (Artifact artifact : artifacts) {
+                artifactFiles.add(artifact.getFile().getAbsolutePath());
+            }
         }
         artifactFiles.add(mavenProject.getBuild().getOutputDirectory());
         return join(artifactFiles, ":");

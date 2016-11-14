@@ -1,8 +1,5 @@
 package de.schauderhaft.degraph;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,19 +21,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-/**
- * Goal which touches a timestamp file.
- *
- * @deprecated Don't use!
- */
-@Mojo(name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES, requiresDependencyResolution = ResolutionScope.TEST)
-public class DegraphVisualizeMojo extends AbstractMojo {
-    /**
-     * Location of the file.
-     */
-    @Parameter(defaultValue = "${project.build.directory}", property = "outputDir", required = true)
-    private File outputDirectory;
-
+@Mojo(name = "degraph", defaultPhase = LifecyclePhase.PROCESS_SOURCES, requiresDependencyResolution = ResolutionScope.TEST)
+public class DegraphMojo extends AbstractMojo {
     @Component
     private MavenProject mavenProject;
 
@@ -49,12 +35,15 @@ public class DegraphVisualizeMojo extends AbstractMojo {
     @Parameter(property = "excludes" )
     private String excludes;
 
+    @Parameter(property = "analyzeArtifacts" )
+    private Boolean analyzeArtifacts;
+
     @Parameter(property = "violationFree" )
     private Boolean requireViolationFree;
 
     public void execute() throws MojoExecutionException {
         try {
-            String classpath = ClasspathBuilder.buildClasspathString(mavenProject);
+            String classpath = ClasspathBuilder.buildClasspathString(mavenProject, analyzeArtifacts != null && analyzeArtifacts);
             //TODO: introduce type parameter (here walk dragons)
             Set constraint = Collections.singleton(CycleFree$.MODULE$);
             DegraphJavaConfig config = new DegraphJavaConfig(classpath, includes(),
@@ -65,8 +54,10 @@ public class DegraphVisualizeMojo extends AbstractMojo {
             if (outputFilename != null) {
                 javaAdapter.storeGraph();
             }
-            if (!(requireViolationFree == null || requireViolationFree)) {
+            System.err.println("requireViolationFree: " + requireViolationFree);
+            if (requireViolationFree != null && requireViolationFree) {
                 List<ConstraintViolation> violations = javaAdapter.getViolations();
+                System.err.println("violations: " + violations);
                 if (!violations.isEmpty()) {
                     throw new MojoExecutionException("there are dependency violations: " +  violations);
                 }
@@ -79,27 +70,18 @@ public class DegraphVisualizeMojo extends AbstractMojo {
     }
 
     private List<String> includes() {
-        return includes == null ? Collections.<String>emptyList() : Arrays.asList(includes);
+        return stringToSingletonList(includes);
     }
 
     private List<String> excludes() {
-        return excludes == null ? Collections.<String>emptyList() : Arrays.asList(excludes);
+        return stringToSingletonList(excludes);
+    }
+
+    private static List<String> stringToSingletonList(String src) {
+        return src == null || src.isEmpty() ? Collections.<String>emptyList() : Arrays.asList(src);
     }
 
     private PrintConfiguration createPrintConfiguration() {
         return outputFilename == null ? NoPrinting.apply() : new Print(outputFilename, true);
-    }
-
-    public void execute0() throws MojoExecutionException {
-        File f = outputDirectory;
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-        File touch = new File(f, "touch.txt");
-        try (FileWriter w = new FileWriter(touch)) {
-            w.write("touch.txt");
-        } catch (IOException e) {
-            throw new MojoExecutionException("Error creating file " + touch, e);
-        }
     }
 }

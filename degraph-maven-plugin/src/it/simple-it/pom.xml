@@ -42,13 +42,16 @@
                 <version>1.0-SNAPSHOT</version>
                 <configuration>
                     <outputFilename>/tmp/degraph-test1.xml</outputFilename>
+                    <requireViolationFree>true</requireViolationFree>
+                    <!--includes>de.schauderhaft.degraph.mavenplugintest.*</includes-->
+                    <analyzeArtifacts>false</analyzeArtifacts>
                 </configuration>
                 <executions>
                     <execution>
                         <id>touch</id>
                         <phase>validate</phase>
                         <goals>
-                            <goal>touch</goal>
+                            <goal>degraph</goal>
                         </goals>
                     </execution>
                 </executions>

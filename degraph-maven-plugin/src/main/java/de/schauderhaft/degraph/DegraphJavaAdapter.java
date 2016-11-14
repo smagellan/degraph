@@ -46,6 +46,7 @@ public class DegraphJavaAdapter {
         graph = nativeConfig.createGraph();
         System.err.println("done");
         violations = constraintsToViolations(config.getConstraints(), graph);
+        System.err.println(violations);
         violationNodes = violationsToNodes();
         System.err.println(violationNodes);
     }
